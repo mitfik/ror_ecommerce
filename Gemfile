@@ -9,6 +9,9 @@ group :assets do
 end
   gem 'sass-rails', "  ~> 3.2.3"
 
+
+gem 'rore-i18n', :git => "git://github.com/mitfik/rore-i18n.git" 
+
 gem "activemerchant", '~> 1.17.0'#, :lib => 'active_merchant'
 gem 'authlogic', "3.0.3"
 gem 'bluecloth',     '~> 2.1.0'
