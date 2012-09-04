@@ -39,7 +39,7 @@ module UserCim
     puts '---------------------------------=======================-------------------============================---------------'
     return true if customer_cim_id
     #Login to the gateway using your credentials in environment.rb
-    @gateway = CIM_GATEWAY
+    @gateway = PaymentSystem::CIM_GATEWAY
 
     #setup the user object to save
     @user = {:profile => user_profile}
@@ -63,7 +63,7 @@ module UserCim
       return false
     end
     if self.email_changed? || self.first_name_changed? || self.last_name_changed?
-      @gateway = CIM_GATEWAY
+      @gateway = PaymentSystem::CIM_GATEWAY
 
       response = @gateway.update_customer_profile(:profile => user_profile.merge({
           :customer_profile_id => self.customer_cim_id
@@ -82,7 +82,7 @@ module UserCim
     if not self.customer_cim_id
       return false
     end
-    @gateway = CIM_GATEWAY
+    @gateway = PaymentSystem::CIM_GATEWAY
 
     response = @gateway.delete_customer_profile(:customer_profile_id => self.customer_cim_id)
 

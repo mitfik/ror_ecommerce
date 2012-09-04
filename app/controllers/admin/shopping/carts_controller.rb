@@ -7,7 +7,7 @@ class Admin::Shopping::CartsController < Admin::Shopping::BaseController
       redirect_to f
     else
       @cart = session_admin_cart
-      @credit_card ||= ActiveMerchant::Billing::CreditCard.new()
+      @credit_card ||= PaymentSystem::CreditCard.new()
     end
   end
 
@@ -16,7 +16,6 @@ class Admin::Shopping::CartsController < Admin::Shopping::BaseController
     session_admin_cart = nil
     redirect_to(admin_shopping_carts_url)
   end
-
 
   private
 
