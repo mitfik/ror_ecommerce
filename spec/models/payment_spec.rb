@@ -22,7 +22,7 @@ describe Payment, " class methods" do
   context "#unstore( profile_key, options = {})" do
 
     it 'should unstore the payment profile' do
-      #GATEWAY.expects(:ssl_post).returns(successful_unstore_response)
+      #PaymentSystem::GATEWAY.expects(:ssl_post).returns(successful_unstore_response)
       charge = Payment.unstore(  '1')
       charge.success.should     be_true
       charge.action.should      == 'unstore'
@@ -30,7 +30,7 @@ describe Payment, " class methods" do
     end
 
     it 'should not unstore the payment profile' do
-      #GATEWAY.expects(:ssl_post).returns(successful_unstore_response)
+      #PaymentSystem::GATEWAY.expects(:ssl_post).returns(successful_unstore_response)
       charge = Payment.unstore(  '3')
       #  puts charge.inspect
       charge.success.should_not     be_true

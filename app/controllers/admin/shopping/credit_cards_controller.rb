@@ -1,4 +1,5 @@
 class Admin::Shopping::CreditCardsController < Admin::Shopping::BaseController
+  # TODO those methods are not used anywhere ? 
   # GET /admin/order/credit_cards
   def index
     @credit_cards = session_admin_cart[:user].credit_cards

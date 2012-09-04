@@ -17,7 +17,7 @@ class Admin::Shopping::Checkout::OrdersController < Admin::Shopping::Checkout::B
       if @order.order_items.empty?
         redirect_to admin_shopping_products_url() and return
       end
-      @credit_card ||= ActiveMerchant::Billing::CreditCard.new(cc_params)
+      @credit_card ||= PaymentSystem::CreditCard.new(cc_params)
     end
   end
 
@@ -36,7 +36,7 @@ class Admin::Shopping::Checkout::OrdersController < Admin::Shopping::Checkout::B
     @order = session_admin_order
     @order.ip_address = request.remote_ip
 
-    @credit_card ||= ActiveMerchant::Billing::CreditCard.new(cc_params)
+    @credit_card ||= PaymentSystem::CreditCard.new(cc_params)
 
     address = @order.bill_address.cc_params
 

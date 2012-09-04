@@ -50,29 +50,8 @@ Hadean::Application.configure do
     #Formtastic::SemanticFormBuilder.send(:include, Formtastic::FuturePicker)
     #Formtastic::SemanticFormBuilder.send(:include, Formtastic::YearPicker)
 
-    ActiveMerchant::Billing::Base.mode = :test
-    #::GATEWAY = ActiveMerchant::Billing::PaypalGateway.new(
-    #  :login      => Settings.paypal.login
-    #  :password   => Settings.paypal.password
-    #  :signature  => Settings.paypal.signature
-    #)
-
-    ::GATEWAY = ActiveMerchant::Billing::AuthorizeNetGateway.new(
-      :login    => Settings.authnet.login,
-      :password => Settings.authnet.password,
-      :test     => true   #  Make sure this is pointing to the authnet test server.  This needs to be uncommented to test capturing a payment.
-    )
-#
-#    ::CIM_GATEWAY = ActiveMerchant::Billing::AuthorizeNetCimGateway.new(
-#      :login    => Settings.authnet.login
-#      :password => Settings.authnet.password
-#      :test     => true   #  Make sure this is pointing to the authnet test server.  This needs to be uncommented to test capturing a payment.
-#    )
-    #::GATEWAY = ActiveMerchant::Billing::BraintreeGateway.new(
-    #  :login     => Settings.braintree.login
-    #  :password  => Settings.braintree.password
-    #)
-  end
+    PaymentSystem::Billing::Base.mode = :test
+ end
 
   PAPERCLIP_STORAGE_OPTS = {  :styles => {:mini => '48x48>',
                                           :small    => '100x100>',

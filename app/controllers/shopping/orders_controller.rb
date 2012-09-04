@@ -32,7 +32,7 @@ class Shopping::OrdersController < Shopping::BaseController
     @order = find_or_create_order
     @order.ip_address = request.remote_ip
 
-    @credit_card ||= ActiveMerchant::Billing::CreditCard.new(cc_params)
+    @credit_card ||= PaymentSystem::CreditCard.new(cc_params)
 
     address = @order.bill_address.cc_params
 
@@ -88,7 +88,7 @@ class Shopping::OrdersController < Shopping::BaseController
   end
 
   def form_info
-    @credit_card ||= ActiveMerchant::Billing::CreditCard.new()
+    @credit_card ||= PaymentSystem::CreditCard.new()
     @order.credited_total
   end
   def require_login

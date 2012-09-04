@@ -15,14 +15,15 @@ mailer:
   server: mail.example.com
   username: someLOGIN
   password: s0meth1ngs3cr3t
-paypal:
-  ip:         192.168.0.1
-  login:      someLOGIN.yahoo.com
-  password:   somePASSWORD
-  signature:  someSIGNATURE
-authnet:
-  login:      someLOGIN
-  password:   somePASSWORD
+payments_system:
+  merchant_hosted_ui: true
+  gateway:
+    login: test
+    password: test
+    signature: test
+  cim_gateway:
+    login: test
+    password: test
 vat: false
 require_state_in_address: true
 
