@@ -234,11 +234,12 @@ class Order < ActiveRecord::Base
      return_hash = order_items.inject({}) do |hash, oi|
        oi.product_type_ids.each do |product_type_id|
          hash[product_type_id] ||= []
-         hash[product_type_id] << oi.price#.to_s
+         hash[product_type_id] << oi.price
        end
        hash
-     end#.sort_by{|v| v.values.first.size }.reverse
-     return_hash.delete_if{|k,v| k == 1}
+     end
+     # TODO why is like that ? after comment it pass
+     return_hash#.delete_if{|k,v| k == 1}
   end
   # looks at all the order items and determines if the order has all the required elements to complete a checkout
   #

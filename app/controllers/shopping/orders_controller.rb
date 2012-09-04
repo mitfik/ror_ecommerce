@@ -38,12 +38,8 @@ class Shopping::OrdersController < Shopping::BaseController
     @order = find_or_create_order
     @order.ip_address = request.remote_ip
 
-    @credit_card ||= ActiveMerchant::Billing::CreditCard.new(cc_params)
-    #gateway = ActiveMerchant::Billing::PaypalGateway.new(:login=>$PAYPAL_LOGIN, :password=>$PAYPAL_PASSWORD)
-
-    #res = gateway.authorize(amount, credit_card, :ip=>request.remote_ip, :billing_address=>billing_address)
+    @credit_card ||= PaymentSystem::CreditCard.new(cc_params)
     address = @order.bill_address.cc_params
-
     if @order.complete?
       #CartItem.mark_items_purchased(session_cart, @order)
       session_cart.mark_items_purchased(@order)
@@ -81,7 +77,7 @@ class Shopping::OrdersController < Shopping::BaseController
   private
 
   def form_info
-    @credit_card ||= ActiveMerchant::Billing::CreditCard.new()
+    @credit_card ||= PaymentSystem::CreditCard.new()
     @order.credited_total
   end
   def require_login

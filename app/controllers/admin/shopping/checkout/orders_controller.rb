@@ -18,7 +18,7 @@ class Admin::Shopping::Checkout::OrdersController < Admin::Shopping::Checkout::B
         redirect_to admin_shopping_products_url() and return
       end
       form_info
-      @credit_card ||= ActiveMerchant::Billing::CreditCard.new(cc_params)
+      @credit_card ||= PaymentSystem::CreditCard.new(cc_params)
       respond_to do |format|
         format.html # index.html.erb
       end
@@ -40,7 +40,7 @@ class Admin::Shopping::Checkout::OrdersController < Admin::Shopping::Checkout::B
     @order = session_admin_order
     @order.ip_address = request.remote_ip
 
-    @credit_card ||= ActiveMerchant::Billing::CreditCard.new(cc_params)
+    @credit_card ||= PaymentSystem::CreditCard.new(cc_params)
 
     address = @order.bill_address.cc_params
 

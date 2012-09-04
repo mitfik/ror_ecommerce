@@ -19,7 +19,7 @@ Dir[Rails.root.join("spec/support/**/*.rb")].each {|f| require f}
 include Hadean::TruncateHelper
 include Hadean::TestHelpers
 include Authlogic::TestCase
-include ActiveMerchant::Billing
+include PaymentSystem::Billing
 
 Rails.logger.level = 4
 Settings.require_state_in_address = true
@@ -107,7 +107,7 @@ end
   end
 
   def credit_card(options = {})
-    ActiveMerchant::Billing::CreditCard.new( credit_card_hash(options) )
+    PaymentSystem::CreditCard.new( credit_card_hash(options) )
   end
 
   # -------------Payment profile and payment could use this
