@@ -37,6 +37,12 @@ en:
   meta_keywords:          'Ruby on Rails, ecommerce'
 
   label_create_shipment_button: 'Create Shipment'
+  notice_transaction_accepted: "Transaction is accepted your package will be send to you as soon as possible, you should recive email with all information."
+
+  alert_payment_canceled: "You transaction was canceled."
+  alert_payment_not_authorized: "Payment was not authorized, please contact with us"
+
+  label_create_shipment_button: "Create Shipment"
 
   date:
     formats:

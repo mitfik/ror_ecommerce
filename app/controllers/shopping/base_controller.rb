@@ -63,6 +63,14 @@ class Shopping::BaseController < ApplicationController
     @session_order
   end
 
+  def find_order(order_id = session[:order_id])
+    current_user.orders.includes([ {:ship_address => :state},
+                                                    {:bill_address => :state},
+                                                    {:order_items =>
+                                                    {:variant =>
+                                                    {:product => :images }}}]).find(order_id)
+  end
+
   def create_order
     @session_order = current_user.orders.create(:number       => Time.now.to_i,
                                                 :ip_address   => request.env['REMOTE_ADDR'],

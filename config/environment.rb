@@ -40,11 +40,5 @@ Hadean::Application.configure do
       ############################################################################################
       "
     end
-    # Setup gateway and cim gateway for store
-    # If you want to change one of those please read: https://github.com/drhenner/ror_ecommerce/wiki/Payments
-    # Depends on the environment which will be used Settings will load proper credentials
-    # except test env because we load different Gateway class (GatewayTest) see config/environments/test.rb
-    PaymentSystem::GATEWAY = PaymentSystem::Gateway.new(Settings.payments_system.gateway.to_hash) unless Rails.env.test?
-    PaymentSystem::CIMGATEWAY = PaymentSystem::CimGateway.new(Settings.payments_system.cim_gateway.to_hash)
   end
 end

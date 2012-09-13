@@ -417,7 +417,7 @@ class User < ActiveRecord::Base
   #def create_cim_profile
   #  return true if customer_cim_id
   #  #Login to the gateway using your credentials in environment.rb
-  #  @gateway = GATEWAY
+  #  @gateway = PaymentSystem.gateway
   #
   #  #setup the user object to save
   #  @user = {:profile => user_profile}
