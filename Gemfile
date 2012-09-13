@@ -28,7 +28,7 @@ group :production do
   gem 'mysql2', '~> 0.3.10'
 end
 
-gem 'nested_set', '~> 1.6.3'
+gem 'nested_set', '~> 1.7.0'
 #gem "nifty-generators", :git => 'git://github.com/drhenner/nifty-generators.git'
 gem 'nokogiri', '~> 1.5.0'
 gem 'paperclip', '~> 2.4.5'
@@ -52,9 +52,10 @@ group :development do
 
   gem "rails-erd"
   gem "debugger"
+
   # YARD AND REDCLOTH are for generating yardocs
-  # gem 'yard'
-  # gem 'RedCloth'
+  gem 'yard'
+  gem 'RedCloth'
 end
 group :test, :development do
   gem "rspec-rails", "~> 2.8.0"
