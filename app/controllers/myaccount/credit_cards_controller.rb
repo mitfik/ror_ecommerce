@@ -1,4 +1,6 @@
 class Myaccount::CreditCardsController < Myaccount::BaseController
+  before_filter :check_settings
+
   def index
     @credit_cards = current_user.payment_profiles
   end
@@ -54,5 +56,11 @@ class Myaccount::CreditCardsController < Myaccount::BaseController
 
   def selected_myaccount_tab(tab)
     tab == 'credit_cards'
+  end
+
+  # if we do not host terminal we turn off credit cards profiles 
+  # we do not want to store anything related with credit cards
+  def check_settings
+    redirect_to myaccount_overview_url unless Settings.payments_system.merchant_hosted_terminal
   end
 end

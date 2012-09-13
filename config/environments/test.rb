@@ -41,11 +41,6 @@ Hadean::Application.configure do
   # Print deprecation notices to the stderr
   config.active_support.deprecation = :stderr
 
-  config.after_initialize do
-    PaymentSystem::Billing::Base.mode = :test
-    PaymentSystem::GATEWAY = ActiveMerchant::Billing::BogusGateway.new
-  end
-
   PAPERCLIP_STORAGE_OPTS = {  :styles => {:mini => '48x48>',
                                           :small => '100x100>',
                                           :product => '320x320>',

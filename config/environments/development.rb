@@ -49,8 +49,6 @@ Hadean::Application.configure do
     #Formtastic::SemanticFormBuilder.send(:include, Formtastic::DatePicker)
     #Formtastic::SemanticFormBuilder.send(:include, Formtastic::FuturePicker)
     #Formtastic::SemanticFormBuilder.send(:include, Formtastic::YearPicker)
-
-    PaymentSystem::Billing::Base.mode = :test
  end
 
   PAPERCLIP_STORAGE_OPTS = {  :styles => {:mini => '48x48>',

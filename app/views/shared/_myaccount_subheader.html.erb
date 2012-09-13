@@ -11,8 +11,10 @@
       <ul>
         <li <%= selected_myaccount_tab('address') ? 'class=selected' : '' %>>
           <%= link_to 'Addresses', myaccount_addresses_path() %></li>
-        <li <%= selected_myaccount_tab('credit_cards') ? 'class=selected' : '' %>>
-          <%= link_to 'Credit Cards', myaccount_credit_cards_path() %></li>
+        <% if Settings.payments_system.merchant_hosted_terminal %>
+          <li <%= selected_myaccount_tab('credit_cards') ? 'class=selected' : '' %>>
+            <%= link_to 'Credit Cards', myaccount_credit_cards_path() %></li>
+        <% end %>
         <li <%= selected_myaccount_tab('orders') ? 'class=selected' : '' %>>
           <%= link_to 'Orders', myaccount_orders_path() %>
         </li>

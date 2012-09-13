@@ -27,6 +27,13 @@ en:
   all_shipping_methods_must_be_selected:  'All the Shipping Methods must be selected'
   do_not_have_anything_in_your_cart:      "You don't have anything in your cart"
 
+  notice_transaction_accepted: "Transaction is accepted your package will be send to you as soon as possible, you should recive email with all information."
+  
+  alert_payment_canceled: "You transaction was canceled."
+  alert_payment_not_authorized: "Payment was not authorized, please contact with us"
+
+  label_create_shipment_button: "Create Shipment"
+
   date:
     formats:
       # Use the strftime parameters for formats.

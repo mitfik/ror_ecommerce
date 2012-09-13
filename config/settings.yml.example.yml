@@ -16,7 +16,9 @@ mailer:
   username: someLOGIN
   password: s0meth1ngs3cr3t
 payments_system:
-  merchant_hosted_ui: true
+  currency_code: USD
+  merchant_hosted_terminal: true
+  gateway_mode: test # production or test for gateway 
   gateway:
     login: test
     password: test

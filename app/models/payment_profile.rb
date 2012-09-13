@@ -116,7 +116,7 @@ class PaymentProfile < ActiveRecord::Base
     self.year         = card.year
     self.first_name   = card.first_name.strip   if card.first_name?
     self.last_name    = card.last_name.strip    if card.last_name?
-    self.cc_type      = card.type
+    self.cc_type      = card.type # TODO change to brand  to support new version of AM
   end
 
   def validate_card

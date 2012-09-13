@@ -46,16 +46,20 @@ class Shopping::BaseController < ApplicationController
   def find_or_create_order
     return @session_order if @session_order
     if session[:order_id]
-      @session_order = current_user.orders.includes([ {:ship_address => :state},
-                                                      {:bill_address => :state},
-                                                      {:order_items =>
-                                                        {:variant =>
-                                                          {:product => :images }}}]).find(session[:order_id])
+      @session_order = find_order(session[:order_id])
       create_order if !@session_order.in_progress?
     else
       create_order
     end
     @session_order
+  end
+
+  def find_order(order_id = session[:order_id])
+    current_user.orders.includes([ {:ship_address => :state},
+                                                    {:bill_address => :state},
+                                                    {:order_items =>
+                                                    {:variant =>
+                                                    {:product => :images }}}]).find(order_id)
   end
 
   def create_order
