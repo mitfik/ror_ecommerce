@@ -78,7 +78,20 @@
                                   :method => :put,
                                   #:as   => :order,
                                   :id   => 'purchase_order') do  %>
+      <% if Settings.payments_system.merchant_hosted_terminal %>
+        <div class="field column">
+          <%= label_tag  :name %>
+        </div>
+        <div class='clear'></div>
+        <div class="field column">
+          <%= label_tag 'First' %>
+           <%= text_field_tag(:first_name, @credit_card.first_name ,:class => 'span-3') %>
+        </div>
 
+        <div class="field column">
+          <%= label_tag :last_name, 'Last' %>
+           <%= text_field_tag(:last_name, @credit_card.last_name,:class => 'span-3') %>
+        </div>
 
       <%# text_field(object_name, method, options = {}) %>
 
@@ -124,7 +137,6 @@
            <%= select_tag(:year, options_for_select((Time.zone.now.year..(Time.zone.now.year + 10)))) %>
         </div>
       </div>
-
 
       <%= submit_tag 'Complete Order', :class => 'button success' %>
     <% end %>

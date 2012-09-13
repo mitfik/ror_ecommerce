@@ -4,6 +4,7 @@ describe Myaccount::CreditCardsController do
   render_views
 
   before(:each) do
+    Settings.payments_system.merchant_hosted_terminal = true
     activate_authlogic
     @user = create(:user)
     login_as(@user)
