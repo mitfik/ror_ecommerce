@@ -21,37 +21,12 @@ class Payment < ActiveRecord::Base
   belongs_to :invoice
 
   serialize :params
-  # this is initialized to an instance of ActiveMerchant::Billing::Base.gateway
-  #cattr_accessor :gateway
 
   validates :amount,      :presence => true
   validates :invoice_id,  :presence => true
 
-
-#  ActiveMerchant::Billing::AuthorizeNetCimGateway
-#  METHOD: create_customer_profile_transaction(options)
-#
-#   Creates a new payment transaction from an existing customer profile
-#
-#   This is what is used to charge a customer whose information you have stored in a Customer Profile.
-#
-#   Returns a Response object that contains the result of the transaction in params[‘direct_response’]
-#   Options
-#
-#       * :transaction — A hash containing information on the transaction that is being requested. (REQUIRED)
-#
-#   Transaction
-#
-#       * :type — The type of transaction. Can be either :auth_only, :capture_only, or :auth_capture. (REQUIRED)
-#       * :amount — The amount for the tranaction. Formatted with a decimal. For example "4.95" (REQUIRED)
-#       * :customer_profile_id — The Customer Profile ID of the customer to use in this transaction. (REQUIRED)
-#       * :customer_payment_profile_id — The Customer Payment Profile ID of the Customer Payment Profile to use in this transaction. (REQUIRED)
-
-
-
-
   def capture_cim
-    @gateway = GATEWAY
+    @gateway = PaymentSystem.gateway
 
     response = @gateway.create_customer_profile_transaction({:transaction => {
                            :type                        => :auth_capture,
@@ -93,6 +68,12 @@ class Payment < ActiveRecord::Base
         end
       end
 
+      def register(amount, options = {})
+        process('registration', amount) do |gw|
+          gw.register(amount, options)
+        end
+      end
+
       def capture(amount, authorization, options = {})
         process('capture', amount) do |gw|
           gw.capture(amount, authorization, options)
@@ -101,7 +82,7 @@ class Payment < ActiveRecord::Base
 
       def charge( amount, profile_key, options ={})
         options[:order_id] ||= unique_order_number
-        if GATEWAY.respond_to?(:purchase)
+        if PaymentSystem.gateway.respond_to?(:purchase)
           process( 'charge', amount ) do |gw|
             gw.purchase( amount, profile_key, options )
           end
@@ -146,19 +127,20 @@ class Payment < ActiveRecord::Base
         result.amount = (amount && !amount.integer?) ? (amount * 100).to_i : amount
         result.action = action
           begin
-            response          = yield GATEWAY
+            response          = yield PaymentSystem.gateway
             result.success    = response.success?
             result.confirmation_id  = response.authorization
             result.message    = response.message
             result.params     = response.params
             result.test       = response.test?
+          # TODO remove this typical for AM error type
           rescue ActiveMerchant::ActiveMerchantError => e
             #puts e
             result.success = false
             result.confirmation_id = nil
             result.message = e.message
             result.params = {}
-            result.test = GATEWAY.test?
+            result.test = PaymentSystem.gateway.test?
           end
         result
       end

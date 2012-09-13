@@ -1,4 +1,5 @@
 class Admin::Shopping::CreditCardsController < Admin::Shopping::BaseController
+  # TODO those methods are not used anywhere ? 
   # GET /admin/order/credit_cards
   # GET /admin/order/credit_cards.xml
   def index

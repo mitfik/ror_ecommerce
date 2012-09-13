@@ -187,11 +187,28 @@ class Order < ActiveRecord::Base
     payment
   end
 
+  # authorize the payment of the invoice by the payment processor
+  #
+  # @param transactionId
+  # @return true or false depend of that if transaction was authorized
+  def authorize_payment(payment)
+    result = PaymentSystem.gateway.authorize(nil, nil, {:transactionId => payment.confirmation_id})
+    payment.invoice.payment_authorized! if result.success?
+    result.success?
+  end
+
 
   ## This method creates the invoice and payment method.  If the payment is not authorized the whole transaction is roled back
   def create_invoice(credit_card, charge_amount, args, credited_amount = 0.0)
     transaction do
       create_invoice_transaction(credit_card, charge_amount, args, credited_amount)
+    end
+  end
+
+  ## This method prepare the invoice and payment method.  If the payment is not registered the whole transaction is roled back
+  def prepare_invoice(charge_amount, args, credited_amount = 0.0)
+    transaction do
+      prepare_invoice_transaction(charge_amount, args, credited_amount)
     end
   end
 
@@ -247,11 +264,12 @@ class Order < ActiveRecord::Base
      return_hash = order_items.inject({}) do |hash, oi|
        oi.product_type_ids.each do |product_type_id|
          hash[product_type_id] ||= []
-         hash[product_type_id] << oi.price#.to_s
+         hash[product_type_id] << oi.price
        end
        hash
-     end#.sort_by{|v| v.values.first.size }.reverse
-     return_hash.delete_if{|k,v| k == 1}
+     end
+     # TODO why is like that ? after comment it pass
+     return_hash#.delete_if{|k,v| k == 1}
   end
   # looks at all the order items and determines if the order has all the required elements to complete a checkout
   #
@@ -560,16 +578,30 @@ class Order < ActiveRecord::Base
   def create_invoice_transaction(credit_card, charge_amount, args, credited_amount = 0.0)
     invoice_statement = Invoice.generate(self.id, charge_amount, credited_amount)
     invoice_statement.save
-    invoice_statement.authorize_payment(credit_card, args)#, options = {})
+    invoice_statement.authorize_payment(credit_card, args)
     invoices.push(invoice_statement)
     if invoice_statement.succeeded?
-      self.order_complete! #complete!
+      self.order_complete! #complete! # TODO but in authorize_payment after success there is authorize_completed_order where complete status is alredy changed but not date set?
       self.save
     else
       #role_back
       invoice_statement.errors.add(:base, 'Payment denied!!!')
       invoice_statement.save
+    end
+    invoice_statement
+  end
 
+  def prepare_invoice_transaction(charge_amount, args, credited_amount = 0.0)
+    invoice_statement = Invoice.generate(self.id, charge_amount, credited_amount)
+    invoice_statement.save
+    invoice_statement.register_payment(args)
+    invoices.push(invoice_statement)
+    if invoice_statement.succeeded?
+      self.save
+    else
+      #role_back
+      invoice_statement.errors.add(:base, 'Payment denied!!!')
+      invoice_statement.save
     end
     invoice_statement
   end

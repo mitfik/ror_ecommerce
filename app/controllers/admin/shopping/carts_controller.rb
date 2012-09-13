@@ -7,7 +7,7 @@ class Admin::Shopping::CartsController < Admin::Shopping::BaseController
       redirect_to f
     else
       @cart = session_admin_cart
-      @credit_card ||= ActiveMerchant::Billing::CreditCard.new()
+      @credit_card ||= PaymentSystem::CreditCard.new()
       respond_to do |format|
         format.html # index.html.erb
       end
@@ -39,7 +39,7 @@ class Admin::Shopping::CartsController < Admin::Shopping::BaseController
   # POST /admin/order/carts.xml
   def create
     @cart         =  session_admin_cart
-    @credit_card ||= ActiveMerchant::Billing::CreditCard.new(cc_params)
+    @credit_card ||= PaymentSystem::CreditCard.new(cc_params)
 
     if @credit_card.valid?
       #ActiveRecord::Base.transaction do

@@ -38,6 +38,7 @@ class Invoice < ActiveRecord::Base
   #end
   state_machine :initial => :pending do
     state :pending
+    state :registered
     state :authorized
     state :paid
     state :payment_declined
@@ -49,23 +50,31 @@ class Invoice < ActiveRecord::Base
       transition :from => :pending,
                   :to   => :refunded
     end
+    event :payment_registered do
+      transition :from => :pending,
+                 :to   => :registered
+    end
     event :payment_authorized do
       transition :from => :pending,
-                  :to   => :authorized
+                 :to   => :authorized
+      transition :from => :registered,
+                 :to   => :authorized
       transition :from => :payment_declined,
-                  :to   => :authorized
+                 :to   => :authorized
     end
     event :payment_captured do
       transition :from => :authorized,
-                  :to   => :paid
+                 :to   => :paid
     end
     event :transaction_declined do
       transition :from => :pending,
-                  :to   => :payment_declined
+                 :to   => :payment_declined
+      transition :from => :registered,
+                 :to   => :payment_declined
       transition :from => :payment_declined,
-                  :to   => :payment_declined
+                 :to   => :payment_declined
       transition :from => :authorized,
-                  :to   => :authorized
+                 :to   => :authorized
     end
 
     event :cancel do
@@ -219,7 +228,7 @@ class Invoice < ActiveRecord::Base
   # @param [none]
   # @return [String] id the payment processor sends you after authorization.
   def authorization_reference
-    if authorization = payments.find_by_action_and_success('authorization', true, :order => 'id ASC')
+    if authorization = payments.find_by_action_and_success(['authorization', 'registration'], true, :order => 'id ASC')
       authorization.confirmation_id #reference
     end
   end
@@ -229,7 +238,7 @@ class Invoice < ActiveRecord::Base
   # @param [none]
   # @return [Boolean] returns true if the invoice is paid or has been authorized for payment
   def succeeded?
-    authorized? || paid?
+    authorized? || paid? || registered?
   end
 
   # call to find out the amount of the invoice in cents
@@ -242,6 +251,7 @@ class Invoice < ActiveRecord::Base
   end
 
   def authorize_payment(credit_card, options = {})
+    # TODO where this number is used? if for some special gateway it should be moved somewhere else!!!
     options[:number] ||= unique_order_number
     transaction do
       authorization = Payment.authorize(integer_amount, credit_card, options)
@@ -253,6 +263,19 @@ class Invoice < ActiveRecord::Base
         transaction_declined!
       end
       authorization
+    end
+  end
+
+  def register_payment(options = {})
+    transaction do
+      registration = Payment.register(integer_amount, options)
+      payments.push(registration)
+      if registration.success?
+        payment_registered!
+      else
+        transaction_declined!
+      end
+      registration
     end
   end
 

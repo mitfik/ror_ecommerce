@@ -85,10 +85,10 @@ class PaymentProfile < ActiveRecord::Base
   # @return [CreditCard]
   def credit_card_info=( card_or_params )
     self.credit_card = case card_or_params
-      when ActiveMerchant::Billing::CreditCard, nil
+      when PaymentSystem::CreditCard, nil
         card_or_params
       else
-        ActiveMerchant::Billing::CreditCard.new(card_or_params)
+        PaymentSystem::CreditCard.new(card_or_params)
       end
     set_minimal_cc_data(self.credit_card)
   end
@@ -99,7 +99,7 @@ class PaymentProfile < ActiveRecord::Base
   # @return [CreditCard]
   def new_credit_card
     # populate new card with some saved values
-    ActiveMerchant::Billing::CreditCard.new(
+    PaymentSystem::CreditCard.new(
       :first_name  => user.first_name,
       :last_name   => user.last_name,
       # :address etc too if we have it
@@ -116,7 +116,7 @@ class PaymentProfile < ActiveRecord::Base
     self.year         = card.year
     self.first_name   = card.first_name.strip   if card.first_name?
     self.last_name    = card.last_name.strip    if card.last_name?
-    self.cc_type      = card.type
+    self.cc_type      = card.type # TODO change to brand  to support new version of AM
   end
 
   def validate_card
@@ -125,7 +125,6 @@ class PaymentProfile < ActiveRecord::Base
       errors.add( :base, 'Credit Card is not present.')
       return false
     end
-    # first validate via ActiveMerchant local code
     unless credit_card.valid?
       # collect credit card error messages into the profile object
       #errors.add(:credit_card, "must be valid")

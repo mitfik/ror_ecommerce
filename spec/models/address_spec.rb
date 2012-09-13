@@ -152,7 +152,7 @@ describe Address, "methods" do
       @finland = Country.find(67)
       @finland.shipping_zone_id = 2
       @finland.save
-      Settings.require_state_in_address = true
+      Settings.require_state_in_address = false
       shipping_zone = ShippingZone.find(1)
       shipping_zone.stubs(:shipping_method_ids).returns([2,3])
       @finland.stubs(:shipping_zone).returns(shipping_zone)
