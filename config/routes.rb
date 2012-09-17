@@ -121,6 +121,7 @@ Hadean::Application.routes.draw do
       resources :shipping_zones, :except => [:show]
       resources :tax_rates, :except => [:show]
       resources :tax_categories
+      resources :countries, :only => [:index, :edit, :update]
     end
 
     namespace :generic do

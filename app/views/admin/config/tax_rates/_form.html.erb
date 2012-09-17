@@ -1,14 +1,4 @@
-<% if @tax_rate.errors.any? %>
-  <div id="error_explanation">
-    <h2><%= pluralize(@tax_rate.errors.count, "error") %> prohibited this tax_rate from being saved:</h2>
-
-    <ul>
-    <% @tax_rate.errors.full_messages.each do |msg| %>
-      <li><%= msg %></li>
-    <% end %>
-    </ul>
-  </div>
-<% end %>
+<%= error_msgs_for(@tax_rate) %>
 
 <fieldset>
   <label>Percentage</label>

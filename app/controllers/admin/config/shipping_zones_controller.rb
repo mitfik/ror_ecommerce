@@ -12,6 +12,8 @@ class Admin::Config::ShippingZonesController < Admin::Config::BaseController
   # GET /admin/config/shipping_zones/1/edit
   def edit
     @shipping_zone = ShippingZone.find(params[:id])
+    @countries = Country.active
+    @states = State.active
   end
 
   # POST /admin/config/shipping_zones

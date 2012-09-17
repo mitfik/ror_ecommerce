@@ -9,6 +9,8 @@ class State < ActiveRecord::Base
   validates :country_id,        :presence => true
   validates :shipping_zone_id,  :presence => true
 
+  scope :active, joins(:country).where("countries.active = ?", true) 
+
   # the abbreviation and name of the state separated by '-' and optionally appended by characters
   #
   # @param [none]

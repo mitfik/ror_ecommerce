@@ -1,0 +1,17 @@
+<h1> Edit Country </h1>
+
+<%= form_for @country, :url => [:admin, :config, @country] do |f| %>
+  <%= error_msgs_for(@country) %>
+  <div class="field">
+    <%= f.label :name %>
+    <%= @country.name %>
+  </div>
+
+  <div class="field">
+    <%= f.label :active %>
+    <%= f.check_box :active %>
+  </div>
+
+  <%= f.submit t("button_save") , :class => 'button' %>
+  <%= link_to t("button_back"), admin_config_countries_path, :class => 'secondary button' %>
+<% end %>
