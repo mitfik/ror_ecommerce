@@ -11,7 +11,7 @@
       <ul>
         <li <%= selected_myaccount_tab('address') ? 'class=selected' : '' %>>
           <%= link_to 'Addresses', myaccount_addresses_path() %></li>
-        <% if Settings.payments_system.merchant_hosted_terminal %>
+          <% if Settings.payment_methods.map { |s| s.merchant_hosted_terminal }.include?(true) %>
           <li <%= selected_myaccount_tab('credit_cards') ? 'class=selected' : '' %>>
             <%= link_to 'Credit Cards', myaccount_credit_cards_path() %></li>
         <% end %>

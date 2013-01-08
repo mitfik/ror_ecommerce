@@ -179,7 +179,6 @@ class Invoice < ActiveRecord::Base
       transaction.transaction_ledgers.push(debit)
       batch.transactions.push(transaction)
       batch.save
-      #puts batch.errors
     else
       raise error ###  something messed up I think
     end
@@ -188,7 +187,7 @@ class Invoice < ActiveRecord::Base
   def cancel_authorized_payment
     batch       = batches.first
     now = Time.zone.now
-    if batch# if not we never authorized the payment
+    if batch # if not we never authorized the payment
       self.cancel!
       transaction = CreditCardCancel.new()##  This is a type of transaction
       debit   = order.user.transaction_ledgers.new(:transaction_account_id => TransactionAccount::REVENUE_ID, :debit => amount, :credit => 0, :period => "#{now.month}-#{now.year}")
@@ -266,9 +265,9 @@ class Invoice < ActiveRecord::Base
     end
   end
 
-  def register_payment(options = {})
+  def register_payment(payment_method_id)
     transaction do
-      registration = Payment.register(integer_amount, options)
+      registration = Payment.register(integer_amount, self.order, payment_method_id)
       payments.push(registration)
       if registration.success?
         payment_registered!
@@ -279,9 +278,9 @@ class Invoice < ActiveRecord::Base
     end
   end
 
-  def capture_payment(options = {})
+  def capture_payment
     transaction do
-      capture = Payment.capture(integer_amount, authorization_reference, options)
+      capture = Payment.capture(integer_amount, authorization_reference, self.order)
       payments.push(capture)
       if capture.success?
         payment_captured!

@@ -11,13 +11,9 @@ class Shopping::BaseController < ApplicationController
   private
 
   def next_form(order)
-
-       # if cart is empty
     if session_cart.cart_items.empty?
       flash[:notice] = I18n.t('do_not_have_anything_in_your_cart')
       return root_url
-
-       ## If we are insecure
     elsif not_secure?
       session[:return_to] = shopping_orders_url
       return login_url()
@@ -29,10 +25,17 @@ class Shopping::BaseController < ApplicationController
   end
 
   def not_secure?
-    !current_user ||
-    session[:authenticated_at].nil? ||
-    (Time.now - session[:authenticated_at] > (60 * 20) ) || ## 20 minutes
-    (cookies[:insecure].nil? || cookies[:insecure] == true)## this should happen every time the user goes to a non-SSL page
+    # timeout after 20 minutes
+    if session[:authenticated_at].nil? || (Time.now - session[:authenticated_at] > (1200) )
+      flash[:alert] = t("error_timeout_please_login")
+      return true
+    # this should happen every time the user goes to a non-SSL page
+    elsif cookies[:insecure].nil? || cookies[:insecure] == true
+      flash[:alert] = t("error_redirect_to_http_from_https")
+      return true
+    else
+      return false
+    end
   end
 
   def session_order

@@ -37,9 +37,11 @@ Hadean::Application.routes.draw do
       end
     end
     resource  :coupon, :only => [:show, :create]
-    resources  :orders, :only => [:index, :update, :checkout, :replay] do
+    resources  :orders, :only => [:index, :update, :checkout] do
       member do
         get :checkout
+      end
+      collection do
         get :replay
       end
     end

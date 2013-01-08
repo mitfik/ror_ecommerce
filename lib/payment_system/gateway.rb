@@ -1,13 +1,14 @@
 module PaymentSystem
-  class Gateway < ActiveMerchant::Billing::NetaxeptGateway
+  class Gateway
+    # template to reuse
     # Gateway for payments in store
-    # Object which should implement 
+    # Object which should implement
     #
     # setup_purchase
     # setup_authorization
     #
     # def register
-    #   # prepare terminal url and all neccessary things before user will be send to termianl
+    #   # register new transaction and prepare terminal url before user will be redirect to terminal
     # end
     #
     # auth

@@ -12,7 +12,6 @@ class Shopping::OrdersController < Shopping::BaseController
   def index
     #current or in-progress otherwise cart (unless cart is empty)
     @order = find_or_create_order
-    #@order = session_cart.add_items_to_checkout(order) # need here because items can also be removed
     if f = next_form(@order)
       redirect_to f
     else
@@ -22,7 +21,6 @@ class Shopping::OrdersController < Shopping::BaseController
       end
     end
   end
-
 
   #  add checkout button
   def checkout
@@ -40,7 +38,11 @@ class Shopping::OrdersController < Shopping::BaseController
 
     address = @order.bill_address.cc_params
     unless @order.complete?
-      proceed_to_pay
+      if params[:payment_method_id]
+        proceed_to_pay(@order, params[:payment_method_id])
+      else
+        flash[:alert] = t("error_please_choose_payment_method")
+      end
     else
       session_cart.mark_items_purchased(@order)
       flash[:error] = I18n.t('the_order_purchased')
@@ -53,14 +55,14 @@ class Shopping::OrdersController < Shopping::BaseController
   def replay
     transactionId, success  = PaymentSystem::Integrations.parse_replay(params)
     payment = Payment.find_by_confirmation_id(transactionId) if transactionId
-    @order = payment.invoice.order if payment
-    if success && @order
-      if @order.authorize_payment(payment)
-        @order.order_complete!
-        @order.save
-        clean_after_payment
+    if success && payment
+      if payment.authorize
+        order = payment.invoice.order
+        order.order_complete!
+        order.save
+        clean_after_payment(order)
         flash[:notice] = I18n.t('notice_transaction_accepted')
-        redirect_to myaccount_order_path(@order)
+        redirect_to myaccount_order_path(order)
       else
         flash[:alert] = I18n.t('alert_payment_not_authorized')
         redirect_to root_url
@@ -75,26 +77,22 @@ class Shopping::OrdersController < Shopping::BaseController
 
   private
 
-    # we have two scenarion how ror-e can be configured with merchant hosted terminal or without
-    # here we decide how to handle those payments 
-    def proceed_to_pay
-      if Settings.payments_system.merchant_hosted_terminal
+    # we have two scenarios how ror-e can handle payments.
+    # With merchant hosted terminal or without
+    def proceed_to_pay(order, payment_method_id)
+      payment_system = PaymentSystem.new(payment_method_id)
+      if payment_system.payment_method.merchant_hosted_terminal
         proceed_payment_with_hosted_terminal
       else
-        proceed_payment_without_hosted_terminal
+        proceed_payment_without_hosted_terminal(payment_method_id)
       end
     end
 
-    def proceed_payment_without_hosted_terminal
-
-      address = @order.bill_address.cc_params
+    def proceed_payment_without_hosted_terminal(payment_method_id)
       # prepare invoice with payment and setup purchase
-      response = @order.prepare_invoice(@order.credited_total,
-                                        {:email => @order.email, :billing_address => address, :ip => @order.ip_address, 
-                                         :redirectUrl => replay_shopping_order_url, :orderNumber => @order.number, 
-                                         :currencyCode => Settings.payments_system.currency_code}, @order.amount_to_credit)
+      response = @order.prepare_invoice(payment_method_id)
       if response.succeeded?
-        redirect_to PaymentSystem::Integrations.terminal_url(response)
+        redirect_to PaymentSystem::Integrations.terminal_url(response.payments.last)
       else
         flash[:alert] =  [I18n.t('could_not_process'), I18n.t('the_order')].join(' ')
         render :action => "index"
@@ -110,7 +108,7 @@ class Shopping::OrdersController < Shopping::BaseController
                                           {:email => @order.email, :billing_address=> address, :ip=> @order.ip_address },
                                           @order.amount_to_credit)
           if response.succeeded?
-            clean_after_payment
+            clean_after_payment(@order)
             redirect_to myaccount_order_path(@order)
           else
             form_info
@@ -129,10 +127,10 @@ class Shopping::OrdersController < Shopping::BaseController
       end
     end
 
-    def clean_after_payment
-      @order.remove_user_store_credits
-      session_cart.mark_items_purchased(@order)
-      Notifier.order_confirmation(@order, invoice).deliver rescue puts( 'do nothing...  dont blow up over an email')
+    def clean_after_payment(order)
+      order.remove_user_store_credits
+      session_cart.mark_items_purchased(order)
+      Notifier.order_confirmation(order, invoice).deliver rescue puts( 'do nothing...  dont blow up over an email')
     end
 
     def form_info
@@ -142,6 +140,7 @@ class Shopping::OrdersController < Shopping::BaseController
 
     def require_login
       if !current_user
+        flash[:alert] = t("error_you_must_login")
         session[:return_to] = shopping_orders_url
         redirect_to( login_url() ) and return
       end
