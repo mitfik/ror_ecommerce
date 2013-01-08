@@ -9,9 +9,7 @@ Please look at the [homepage](http://www.ror-e.com) for more details.
 
 ![RoR Ecommerce](http://ror-e.com/images/logo.png "ROR Ecommerce").
 
-This is a Rails e-commerce platform. Other e-commerce projects that use rails don't use rails in a standard way.
-They use engines or are a separate framework altogether.
-
+This is a Rails e-commerce platform.
 ROR Ecommerce is a *Rails 3 application* with the intent to allow developers to create an ecommerce solution easily.
 This solution includes an Admin for *Purchase Orders*, *Product creation*, *Shipments*, *Fulfillment* and *creating Orders*.
 There is a minimal customer facing shopping cart understanding that this will be customized.
@@ -61,7 +59,7 @@ If you just want to see what ror_ecommerce looks like, before you enter any prod
     rake db:seed_fake
 
 You should now have a minimal dataset, and be able to see a demo of the various parts of the app.
-Note: make sure you have `config/config.yml` set up correctly before you try to checkout.
+Note: make sure you have `config/settings.yml` set up correctly before you try to checkout.
 Also, please take a look at [The 15 minute e-commerce video](http://www.ror-e.com/info/videos/7).
 
 ##YARDOCS
@@ -83,7 +81,7 @@ Type: `which identify` in the terminal and set
 Paperclip.options[:command_path]
 ```
 
-equal to that path in `environment.rb`.
+equal to that path in `config/paperclip.rb`.
 
 Example:
 
@@ -170,7 +168,6 @@ You need to run `rake sunspot:solr:start`, or remove Solr completely.
 
 ##TODO:
 
-* product sales (eg. 20% off)
 * more documentation / videos for creating products/variants
 
 ##Author

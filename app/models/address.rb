@@ -1,3 +1,11 @@
+# ADDRESS DOCUMENTATION
+#
+# The users table represents...  ADDRESSES!!!
+#
+# There really isn't anything special about addresses themselves.  However PLEASE PLEASE PLEASE never ever implement @address.delete or @address.destroy or even @address.update_attributes.  You should only create and inactivate addresses.   This means EDIT == create and inactivate the old address.  Please read the following blog to understand the logic.  THIS IS EXTREMELY IMPORTANT!
+
+#  http://www.ror-e.com/posts/27-e-commerce-tips-1-0
+
 # == Schema Information
 #
 # Table name: addresses
@@ -93,7 +101,7 @@ class Address < ActiveRecord::Base
 
   # Method used to determine the shipping methods ids available for this address
   def shipping_method_ids
-    if Settings.require_state_in_address
+    if state_id && state.shipping_zone
       state.shipping_zone.shipping_method_ids
     else
       country.shipping_zone_id ? country.shipping_zone.shipping_method_ids : []
@@ -103,9 +111,9 @@ class Address < ActiveRecord::Base
   #
   #  Specifically used to determine the order_item.shipping_rate_options
   def shipping_zone_id
-    if Settings.require_state_in_address
+    if state_id
       state.shipping_zone_id
-    else
+    elsif country_id
       country.shipping_zone_id
     end
   end
@@ -199,6 +207,14 @@ class Address < ActiveRecord::Base
     [city, state_abbr_name].join(', ')
   end
 
+  # Use this method to represent the "city, state.abbreviation"
+  #
+  # @param [none]
+  # @return [String] "city, state.abbreviation"
+  def state_country_name
+    [state_abbr_name, country.try(:name)].compact.join(', ')
+  end
+
   # Use this method to represent the "city, state.abbreviation zip_code"
   #
   # @param [none]
@@ -212,10 +228,10 @@ class Address < ActiveRecord::Base
     def sanitize_data
       self.first_name  = self.first_name.strip  unless self.first_name.blank?
       self.last_name   = self.last_name.strip   unless self.last_name.blank?
-      self.city       = self.city.strip       unless self.city.blank?
+      self.city        = self.city.strip        unless self.city.blank?
       self.zip_code    = self.zip_code.strip    unless self.zip_code.blank?
-      #self.phone      = self.phone.strip      unless self.phone.blank?
-      self.address1   = self.address1.strip   unless self.address1.blank?
-      self.address2   = self.address2.strip   unless self.address2.blank?
+      #self.phone      = self.phone.strip       unless self.phone.blank?
+      self.address1    = self.address1.strip    unless self.address1.blank?
+      self.address2    = self.address2.strip    unless self.address2.blank?
     end
 end

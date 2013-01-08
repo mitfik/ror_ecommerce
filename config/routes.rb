@@ -116,7 +116,8 @@ Hadean::Application.routes.draw do
       end
     end
     namespace :config do
-      resources :accounts, :except => [:show]
+      resources :accounts
+      resources :countries, :only => [:index, :update, :destroy]
       resources :overviews
       resources :shipping_categories, :except => [:show]
       resources :shipping_rates, :except => [:show]
@@ -129,6 +130,7 @@ Hadean::Application.routes.draw do
     namespace :generic do
       resources :coupons
       resources :deals
+      resources :sales
     end
     namespace :inventory do
       resources :suppliers
