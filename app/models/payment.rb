@@ -15,6 +15,7 @@
 #  test            :boolean(1)
 #  created_at      :datetime
 #  updated_at      :datetime
+#  payment_method_id :integer(4)
 #
 
 class Payment < ActiveRecord::Base
@@ -45,6 +46,24 @@ class Payment < ActiveRecord::Base
     end
   end
 
+  def payment_method
+    PaymentSystem.get_payment_method(self.payment_method_id)
+  end
+
+  def payment_method=(payment_method)
+    self.payment_method_id = payment_method.id
+  end
+
+  # Authorize payment after registration and verification from payment system
+  # Scenario with external terminal where we have already invoice and payment
+  # objects
+  def authorize
+    payment_system = PaymentSystem.new(payment_method_id)
+    result = payment_system.gateway.authorize(nil, nil, {:transactionId => confirmation_id})
+    invoice.payment_authorized! if result.success?
+    result.success?
+  end
+
 
   class << self
 
@@ -68,20 +87,23 @@ class Payment < ActiveRecord::Base
         end
       end
 
-      def register(amount, options = {})
-        process('registration', amount) do |gw|
+      # Register transaction and prepare everything before we will proceed the payment
+      # Used only when terminal is hosted by payment provider.
+      def register(amount, order, payment_method_id)
+        process('registration', order, amount, payment_method_id) do |gw, options|
           gw.register(amount, options)
         end
       end
 
-      def capture(amount, authorization, options = {})
-        process('capture', amount) do |gw|
-          gw.capture(amount, authorization, options)
+      def capture(amount, authorization, order)
+        process('capture', order, amount, payment_method_id) do |gw|
+          gw.capture(amount, authorization, order)
         end
       end
 
       def charge( amount, profile_key, options ={})
         options[:order_id] ||= unique_order_number
+        # TODO refactor this code
         if PaymentSystem.gateway.respond_to?(:purchase)
           process( 'charge', amount ) do |gw|
             gw.purchase( amount, profile_key, options )
@@ -122,20 +144,21 @@ class Payment < ActiveRecord::Base
         "#{Time.now.to_i}-#{rand(1_000_000)}"
       end
 
-      def process(action, amount = nil)
-        result = Payment.new
+      def process(action, order, amount = nil, payment_method_id)
+        payment_system = PaymentSystem.new(payment_method_id)
+        options = {:order => order}
+        result = Payment.new(:payment_method_id => payment_method_id)
+
         result.amount = (amount && !amount.integer?) ? (amount * 100).to_i : amount
         result.action = action
           begin
-            response          = yield PaymentSystem.gateway
+            response          = yield payment_system.gateway, options
             result.success    = response.success?
             result.confirmation_id  = response.authorization
             result.message    = response.message
             result.params     = response.params
             result.test       = response.test?
-          # TODO remove this typical for AM error type
-          rescue ActiveMerchant::ActiveMerchantError => e
-            #puts e
+          rescue PaymentSystem::Error => e
             result.success = false
             result.confirmation_id = nil
             result.message = e.message

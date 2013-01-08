@@ -18,7 +18,6 @@ class Shopping::OrdersController < Shopping::BaseController
     end
   end
 
-
   #  add checkout button
   def checkout
     #current or in-progress otherwise cart (unless cart is empty)
@@ -36,30 +35,40 @@ class Shopping::OrdersController < Shopping::BaseController
 
     address = @order.bill_address.cc_params
 
-    if !@order.in_progress?
-      proceed_to_pay
+    if @order.in_progress?
+      if params[:payment_method_id]
+        proceed_to_pay(@order, params[:payment_method_id])
+      else
+        flash[:alert] = t("error_please_choose_payment_method")
+      end
+    else
+      session_cart.mark_items_purchased(@order)
+      flash[:error] = I18n.t('the_order_purchased')
+      redirect_to myaccount_order_url(@order)
     end
   end
 
-  # replay from payment system in case if merchant_hosted_terminal is false
-  # and user will be redirect to external terminal
+  # When merchant_hosted_terminal is false it means that user is send to
+  # external terminal hosted by payment system provider. Afterwards payment
+  # system provider inform the store about status of the payment by sending
+  # those information to replay_shopping_orders_path (pointing to this method).
   def replay
     transactionId, success  = PaymentSystem::Integrations.parse_replay(params)
     payment = Payment.find_by_confirmation_id(transactionId) if transactionId
-    @order = payment.invoice.order if payment
-    if success && @order
-      if @order.authorize_payment(payment)
-        @order.order_complete!
-        @order.save
-        clean_after_payment
+    if success && payment
+      if payment.authorize
+        order = payment.invoice.order
+        order.order_complete!
+        order.save
+        clean_after_payment(order)
         flash[:notice] = I18n.t('notice_transaction_accepted')
-        redirect_to myaccount_order_path(@order)
+        redirect_to myaccount_order_path(order)
       else
         flash[:alert] = I18n.t('alert_payment_not_authorized')
         redirect_to root_url
       end
     else
-      # cancel order and inform user that he didn't pay and we didn't block any money so he can try one more time.
+      # Order was canceled and the money was not booked
       flash[:alert] = I18n.t('alert_payment_canceled')
       redirect_to root_url
       #TODO Transaction should be canceled - check if everything is remove and clear
@@ -68,26 +77,22 @@ class Shopping::OrdersController < Shopping::BaseController
 
   private
 
-    # we have two scenarion how ror-e can be configured with merchant hosted terminal or without
-    # here we decide how to handle those payments
-    def proceed_to_pay
-      if Settings.payments_system.merchant_hosted_terminal
+    # we have two scenarios how ror-e can handle payments.
+    # With merchant hosted terminal or without
+    def proceed_to_pay(order, payment_method_id)
+      payment_system = PaymentSystem.new(payment_method_id)
+      if payment_system.payment_method.merchant_hosted_terminal
         proceed_payment_with_hosted_terminal
       else
-        proceed_payment_without_hosted_terminal
+        proceed_payment_without_hosted_terminal(payment_method_id)
       end
     end
 
-    def proceed_payment_without_hosted_terminal
-
-      address = @order.bill_address.cc_params
+    def proceed_payment_without_hosted_terminal(payment_method_id)
       # prepare invoice with payment and setup purchase
-      response = @order.prepare_invoice(@order.credited_total,
-                                        {:email => @order.email, :billing_address => address, :ip => @order.ip_address,
-                                         :redirectUrl => replay_shopping_order_url, :orderNumber => @order.number,
-                                         :currencyCode => Settings.payments_system.currency_code}, @order.amount_to_credit)
+      response = @order.prepare_invoice(payment_method_id)
       if response.succeeded?
-        redirect_to PaymentSystem::Integrations.terminal_url(response)
+        redirect_to PaymentSystem::Integrations.terminal_url(response.payments.last)
       else
         flash[:alert] =  [I18n.t('could_not_process'), I18n.t('the_order')].join(' ')
         render :action => "index"

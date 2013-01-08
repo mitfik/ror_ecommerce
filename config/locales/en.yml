@@ -39,6 +39,11 @@ en:
   label_create_shipment_button: 'Create Shipment'
   notice_transaction_accepted: "Transaction is accepted your package will be send to you as soon as possible, you should recive email with all information."
 
+  error_you_must_login: Please loggin to continue.
+  error_timeout_please_login: You was automaticly logged out after 20 minutes. Please login again.
+  error_redirect_to_http_from_https: You are redirect from non secure page, due to security reason please login again.
+  error_please_choose_payment_method: Please choose payment method.
+
   alert_payment_canceled: "You transaction was canceled."
   alert_payment_not_authorized: "Payment was not authorized, please contact with us"
 

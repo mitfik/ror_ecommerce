@@ -27,23 +27,23 @@
 #
 # Table name: orders
 #
-#  id              :integer(4)      not null, primary key
-#  number          :string(255)
-#  ip_address      :string(255)
-#  email           :string(255)
-#  state           :string(255)
-#  user_id         :integer(4)
-#  bill_address_id :integer(4)
-#  ship_address_id :integer(4)
-#  coupon_id       :integer(4)
-#  active          :boolean(1)      default(TRUE), not null
-#  shipped         :boolean(1)      default(FALSE), not null
-#  shipments_count :integer(4)      default(0)
-#  calculated_at   :datetime
-#  completed_at    :datetime
-#  created_at      :datetime
-#  updated_at      :datetime
-#  credited_amount :decimal(8, 2)   default(0.0)
+#  id                :integer(4)      not null, primary key
+#  number            :string(255)
+#  ip_address        :string(255)
+#  email             :string(255)
+#  state             :string(255)
+#  user_id           :integer(4)
+#  bill_address_id   :integer(4)
+#  ship_address_id   :integer(4)
+#  coupon_id         :integer(4)
+#  active            :boolean(1)      default(TRUE), not null
+#  shipped           :boolean(1)      default(FALSE), not null
+#  shipments_count   :integer(4)      default(0)
+#  calculated_at     :datetime
+#  completed_at      :datetime
+#  created_at        :datetime
+#  updated_at        :datetime
+#  credited_amount   :decimal(8, 2)   default(0.0)
 #
 
 class Order < ActiveRecord::Base
@@ -187,21 +187,10 @@ class Order < ActiveRecord::Base
   # @param [Invoice]
   # @return [Payment] payment object
   def capture_invoice(invoice)
-    payment = invoice.capture_payment({})
+    payment = invoice.capture_payment()
     self.pay! if payment.success
     payment
   end
-
-  # authorize the payment of the invoice by the payment processor
-  #
-  # @param transactionId
-  # @return true or false depend of that if transaction was authorized
-  def authorize_payment(payment)
-    result = PaymentSystem.gateway.authorize(nil, nil, {:transactionId => payment.confirmation_id})
-    payment.invoice.payment_authorized! if result.success?
-    result.success?
-  end
-
 
   ## This method creates the invoice and payment method.  If the payment is not authorized the whole transaction is roled back
   def create_invoice(credit_card, charge_amount, args, credited_amount = 0.0)
@@ -220,10 +209,12 @@ class Order < ActiveRecord::Base
     end
   end
 
-  ## This method prepare the invoice and payment method.  If the payment is not registered the whole transaction is roled back
-  def prepare_invoice(charge_amount, args, credited_amount = 0.0)
+  ## This method prepare the invoice and payment method.
+  # If the payment is not registered the whole transaction is roled back
+  # This method is used when user use external terminal
+  def prepare_invoice(payment_method_id)
     transaction do
-      prepare_invoice_transaction(charge_amount, args, credited_amount)
+      prepare_invoice_transaction(credited_total, payment_method_id, amount_to_credit)
     end
   end
 
@@ -628,6 +619,7 @@ class Order < ActiveRecord::Base
     end
   end
 
+  # Used when terminal is hosted by merchant
   def create_invoice_transaction(credit_card, charge_amount, args, credited_amount = 0.0)
     invoice_statement = Invoice.generate(self.id, charge_amount, credited_amount)
     invoice_statement.save
@@ -644,10 +636,11 @@ class Order < ActiveRecord::Base
     invoice_statement
   end
 
-  def prepare_invoice_transaction(charge_amount, args, credited_amount = 0.0)
+  # Used when the terminal is hosted by payment system.
+  def prepare_invoice_transaction(charge_amount, payment_method_id, credited_amount = 0.0)
     invoice_statement = Invoice.generate(self.id, charge_amount, credited_amount)
     invoice_statement.save
-    invoice_statement.register_payment(args)
+    invoice_statement.register_payment(payment_method_id)
     invoices.push(invoice_statement)
     if invoice_statement.succeeded?
       self.save

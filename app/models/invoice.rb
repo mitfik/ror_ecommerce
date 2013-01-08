@@ -246,9 +246,9 @@ class Invoice < ActiveRecord::Base
     end
   end
 
-  def register_payment(options = {})
+  def register_payment(payment_method_id)
     transaction do
-      registration = Payment.register(integer_amount, options)
+      registration = Payment.register(integer_amount, self.order, payment_method_id)
       payments.push(registration)
       if registration.success?
         payment_registered!
@@ -259,9 +259,9 @@ class Invoice < ActiveRecord::Base
     end
   end
 
-  def capture_payment(options = {})
+  def capture_payment
     transaction do
-      capture = Payment.capture(integer_amount, authorization_reference, options)
+      capture = Payment.capture(integer_amount, authorization_reference, self.order)
       payments.push(capture)
       if capture.success?
         payment_captured!

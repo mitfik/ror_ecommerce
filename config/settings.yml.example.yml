@@ -15,17 +15,6 @@ mailer:
   server: mail.example.com
   username: someLOGIN
   password: s0meth1ngs3cr3t
-payments_system:
-  currency_code: USD
-  merchant_hosted_terminal: true
-  gateway_mode: test # production or test for gateway 
-  gateway:
-    login: test
-    password: test
-    signature: test
-  cim_gateway:
-    login: test
-    password: test
 vat: false
 require_state_in_address: true
 
@@ -37,3 +26,45 @@ paperclip:
   path: ':class/:attachment/:style/:hash.:extension'
   bucket: <%= ENV['FOG_DIRECTORY'] %>
   hash_secret: f8c07cf79094ec06f77b6024b5d7936c79b5227274fb8e82c00blaha
+payment_methods:
+  -
+    id: 1
+    name: PayPal
+    class_name: paypal
+    description: AMEX, PayPal
+    default: false
+    currency_code: USD
+    merchant_hosted_terminal: false
+    gateway_mode: test # production or test for gateway and cim_gateway
+    gateway:
+      ip:         192.168.0.1
+      login:      someLOGIN.yahoo.com
+      password:   somePASSWORD
+      signature:  someSIGNATURE
+    cim_gateway:
+      ip:         192.168.0.1
+      login:      someLOGIN.yahoo.com
+      password:   somePASSWORD
+      signature:  someSIGNATURE
+  -
+    id: 2
+    name: Netaxcept
+    default: true
+    description: VISA, MASTERCARD
+    gateway_class_name: ActiveMerchant::Billing::NetaxeptGateway
+    integration_class_name: ActiveMerchant::Billing::Integrations::Netaxept
+    currency_code: NOK
+    merchant_hosted_terminal: false
+    gateway_mode: test # production or test for gateway and cim_gateway
+    gateway:
+      login: someLogin
+      password: somePassword
+    cim_gateway:
+      login: someLogin
+      password: somePassword
+vat: true # TODO this should be available only for merchant country (main store command center)
+require_state_in_address: true # TODO this should be requried only for some countries.
+available_country:
+  - PL
+  - US
+  - NOR

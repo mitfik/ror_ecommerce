@@ -78,7 +78,8 @@
                                   :method => :put,
                                   #:as   => :order,
                                   :id   => 'purchase_order') do  %>
-      <% if Settings.payments_system.merchant_hosted_terminal %>
+      <!-- This should be in payment methods partial as part of proper payment method -->
+      <% if false %>
         <div class="field column">
           <%= label_tag  :name %>
         </div>
@@ -93,7 +94,7 @@
            <%= text_field_tag(:last_name, @credit_card.last_name,:class => 'span-3') %>
         </div>
 
-      <%# text_field(object_name, method, options = {}) %>
+        <% text_field(object_name, method, options = {}) %>
 
 
 
@@ -138,7 +139,14 @@
         </div>
       </div>
 
+    <% end %>
+
+      <% PaymentSystem.get_payment_methods.each do |payment_method| %>
+        <p> <%= radio_button_tag "payment_method_id", payment_method.id, payment_method.default %> <%= payment_method.name %> </p>
+      <% end %>
+
       <%= submit_tag 'Complete Order', :class => 'button success' %>
+
     <% end %>
   </div>
 </div>

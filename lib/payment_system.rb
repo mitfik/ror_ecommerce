@@ -1,18 +1,58 @@
-module PaymentSystem
-  mattr_accessor :gateway_object
-  mattr_accessor :cimgateway_object
+class PaymentSystem
 
-    # Setup gateway and cim gateway for store
-    # If you want to change one of those please read: https://github.com/drhenner/ror_ecommerce/wiki/Payments
-    # Depends on the environment which will be used Settings will load proper credentials
-    # except test env because we load different Gateway class (GatewayTest) see config/environments/test.rb
-    def self.gateway 
-      PaymentSystem::Billing::Base.mode = Settings.payments_system.gateway_mode.to_sym
-      return gateway_object || gateway_object = PaymentSystem::Gateway.new(Settings.payments_system.gateway.to_hash) unless Rails.env.test?
-      return gateway_object || gateway_object = ActiveMerchant::Billing::BogusGateway.new if Rails.env.test?
-    end
+  # PaymentSystem class is used for handling all communication between store
+  # and any payment system. The class should be enough flexible to implement
+  # any payment system.
 
-    def self.cim_gateway
-      return cimgateway_object || cimgateway_object = PaymentSystem::CimGateway.new(Settings.payments_system.cim_gateway.to_hash)
+  attr_accessor :payment_method, :gateway, :cim_gateway
+
+  def initialize(payment_method_id)
+    @payment_method = PaymentSystem.get_payment_method(payment_method_id)
+  end
+
+  # Setup the gateway and the cim gateway for the store
+  # More information about it you can find here:
+  # https://github.com/mitfik/ror_ecommerce/wiki/Payments
+  # Depends on the rails environment Settings will load proper credentials.
+
+  def gateway
+    PaymentSystem::Base.mode = payment_method.gateway_mode.to_sym
+    if Rails.env.test?
+      return PaymentSystem::TestGateway.new
+    else
+      return PaymentSystem::Gateway.new(payment_method.gateway.to_hash)
     end
+  end
+
+  # TODO documetation
+  def integrations
+    eval payment_method.integration_class_name
+  end
+
+  def cim_gateway
+    # TODO not implemented
+    raise NotImplementedError
+  end
+
+
+  def self.get_payment_method(payment_method_id)
+    get_payment_methods.each do |payment_method|
+      return payment_method if payment_method.id == payment_method_id.to_i
+    end
+    return nil
+  end
+
+  # Find out which payment method is set as default one.
+  def self.get_default_payment_method
+    get_payment_methods.each do |payment_method|
+      return payment_method if payment_method.default
+    end
+  end
+
+  # Get all payment methods defined in settings
+  # See settings.yml.example for details.
+  def self.get_payment_methods
+    Settings.payment_methods
+  end
+
 end
