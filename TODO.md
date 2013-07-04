@@ -1,5 +1,8 @@
 ##This is a random list of thoughts that I would like todo.
 
+replace debugger until it will be fixed:
+https://github.com/cldwalker/debugger/issues/47
+
 add tax and not adding tax
 
 global flag for VAT

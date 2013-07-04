@@ -2,12 +2,14 @@ source 'http://rubygems.org'
 
 ## Bundle rails:
 gem 'rails', '4.0.0'
+gem 'therubyracer'
 
   gem 'uglifier', '>= 1.3.0'
   gem 'sass-rails',   '~> 4.0.0'
 
 gem 'actionpack-page_caching'
-gem "activemerchant", '~> 1.29.3'#, :lib => 'active_merchant'
+gem "activemerchant", :git => "/home/mtfk/Workspace/github/mitfik/active_merchant", :branch => "nets"
+gem "active_utils", :git => "https://github.com/Shopify/active_utils.git"
 gem "american_date"
 gem 'authlogic', :git => 'git@github.com:christophemaximin/authlogic.git', :branch => 'fix_deprecated_with_scope' #, "3.2.0"
 gem "asset_sync"
