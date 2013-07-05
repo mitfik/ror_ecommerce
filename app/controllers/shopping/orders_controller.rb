@@ -53,13 +53,13 @@ class Shopping::OrdersController < Shopping::BaseController
   # system provider inform the store about status of the payment by sending
   # those information to replay_shopping_orders_path (pointing to this method).
   def replay
-    transactionId, success  = PaymentSystem::Integrations.parse_replay(params)
+    # TODO how do we know which payment methods hits us?
+    transactionId, success  = PaymentSystem.gateway.parse_replay(params)
     payment = Payment.find_by_confirmation_id(transactionId) if transactionId
     if success && payment
       if payment.authorize
         order = payment.invoice.order
-        order.order_complete!
-        order.save
+        order.complete!
         clean_after_payment(order)
         flash[:notice] = I18n.t('notice_transaction_accepted')
         redirect_to myaccount_order_path(order)
@@ -92,7 +92,7 @@ class Shopping::OrdersController < Shopping::BaseController
       # prepare invoice with payment and setup purchase
       response = @order.prepare_invoice(payment_method_id)
       if response.succeeded?
-        redirect_to PaymentSystem::Integrations.terminal_url(response.payments.last)
+        redirect_to PaymentSystem::Gateway.terminal_url(response.payments.last)
       else
         flash[:alert] =  [I18n.t('could_not_process'), I18n.t('the_order')].join(' ')
         render :action => "index"
@@ -158,6 +158,12 @@ class Shopping::OrdersController < Shopping::BaseController
       session[:return_to] = shopping_orders_url
       redirect_to( login_url() ) and return
     end
+  end
+
+  def clean_after_payment(order)
+    order.remove_user_store_credits
+    session_cart.mark_items_purchased(order)
+    Notifier.order_confirmation(order, invoice).deliver rescue puts( 'do nothing... dont blow up over an email')
   end
 
 end

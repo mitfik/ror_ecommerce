@@ -1,7 +1,16 @@
 ##This is a random list of thoughts that I would like todo.
 
-replace debugger until it will be fixed:
+- replace debugger until it will be fixed:
 https://github.com/cldwalker/debugger/issues/47
+
+- remove batches from standard process as it could be introduced as a plugin
+
+- after capture money dialog do not disapear and you can capture one more time
+  which cuase a error
+
+- remove credit card from the system (we should not do anything which is related
+  with credit card. We are pushing everything on the payment system side.
+
 
 add tax and not adding tax
 

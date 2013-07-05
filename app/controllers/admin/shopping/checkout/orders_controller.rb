@@ -33,6 +33,8 @@ class Admin::Shopping::Checkout::OrdersController < Admin::Shopping::Checkout::B
   end
 
   def update
+    # TODO do the same as for ordinary order
+    # to choose payment system
     @order = session_admin_order
     @order.ip_address = request.remote_ip
 
