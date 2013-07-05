@@ -1,7 +1,7 @@
 class PaymentSystem
 
   # PaymentSystem class is used for handling all communication between store
-  # and any payment system. The class should be enough flexible to implement
+  # and payment provider. The class should be enough flexible to implement
   # any payment system.
 
   attr_accessor :payment_method, :gateway, :cim_gateway
@@ -20,7 +20,8 @@ class PaymentSystem
     if Rails.env.test?
       return PaymentSystem::TestGateway.new
     else
-      return PaymentSystem::Gateway.new(payment_method.gateway.to_hash)
+      klass = payment_method.gateway_class_name
+      return klass.new(payment_method.gateway.to_hash)
     end
   end
 
@@ -34,25 +35,44 @@ class PaymentSystem
     raise NotImplementedError
   end
 
+  # TODO those methods are used in external terminal process flow
+  # Move to integration ?
+  # Prepare all necessary options for your payment gateway.
+  # See:
+  # TODO Documentation
+  def prepare_options_for_gateway(options = {})
+    order = options[:order]
+    {:redirectUrl => replay_shopping_orders_url, :currencyCode => payment_method.currency_code, :orderNumber => order.id }
+  end
 
-  def self.get_payment_method(payment_method_id)
-    get_payment_methods.each do |payment_method|
-      return payment_method if payment_method.id == payment_method_id.to_i
+  def prepare_options_for_authorization(options = {})
+    order = options[:order]
+    {:transactionId => order.confirmation_id }
+  end
+
+  class << self
+
+    # Fetch payment method from settings by id
+    def get_payment_method(payment_method_id)
+      get_payment_methods.each do |payment_method|
+        return payment_method if payment_method.id == payment_method_id.to_i
+      end
+      raise PaymentSystem::Error::InvalidPaymentMethodId
     end
-    return nil
-  end
 
-  # Find out which payment method is set as default one.
-  def self.get_default_payment_method
-    get_payment_methods.each do |payment_method|
-      return payment_method if payment_method.default
+    # Find out which payment method is set as default one.
+    # if none then default one is the first one.
+    def get_default_payment_method
+      get_payment_methods.each do |payment_method|
+        return payment_method if payment_method.default
+      end
+      return get_payment_methods.first
+    end
+
+    # Get all payment methods defined in settings
+    # See settings.yml.example for details.
+    def get_payment_methods
+      Settings.payment_methods
     end
   end
-
-  # Get all payment methods defined in settings
-  # See settings.yml.example for details.
-  def self.get_payment_methods
-    Settings.payment_methods
-  end
-
 end

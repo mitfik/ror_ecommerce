@@ -90,12 +90,22 @@ class Order < ActiveRecord::Base
 
     after_transition :to => 'paid', :do => [:mark_items_paid]
 
+    after_transition :to => 'complete', :do => [:order_has_been_completed]
+
     event :complete do
       transition :to => 'complete', :from => 'in_progress'
     end
 
     event :pay do
       transition :to => 'paid', :from => ['in_progress', 'complete']
+    end
+
+    event :cancel do
+      transition :from => "complete",
+                 :to => "canceled"
+
+      transition :from => "in_progress",
+                 :to => "canceled"
     end
   end
 
@@ -140,6 +150,7 @@ class Order < ActiveRecord::Base
   def cancel_unshipped_order(invoice)
     transaction do
       self.update_attributes(:active => false)
+      self.cancel!
       invoice.cancel_authorized_payment
     end
   end
@@ -210,16 +221,6 @@ class Order < ActiveRecord::Base
     end
   end
 
-  # call after the order is completed (authorized the payment)
-  # => sets the order.state to completed, sets completed_at to time.now and updates the inventory
-  #
-  # @param [none]
-  # @return [Payment] payment object
-  def order_complete!
-    self.state = 'complete'
-    self.completed_at = Time.zone.now
-    update_inventory
-  end
 
   # This method will go to every order_item and calculate the total for that item.
   #
@@ -618,8 +619,7 @@ class Order < ActiveRecord::Base
     invoice_statement.authorize_payment(credit_card, args)
     invoices.push(invoice_statement)
     if invoice_statement.succeeded?
-      self.order_complete! #complete! # TODO but in authorize_payment after success there is authorize_completed_order where complete status is alredy changed but not date set?
-      self.save
+      self.complete! #complete! # TODO but in authorize_payment after success there is authorize_completed_order where complete status is alredy changed but not date set?
     else
       #role_back
       invoice_statement.errors.add(:base, 'Payment denied!!!')
@@ -639,8 +639,18 @@ class Order < ActiveRecord::Base
     else
       #role_back
       invoice_statement.errors.add(:base, 'Payment denied!!!')
-      invoice_statement.save
+      invoice.save # TODO this does not make sens if there are errors, check that.
     end
     invoice_statement
+  end
+
+  # call after the order is completed (authorized the payment)
+  # => sets completed_at to time.now and updates the inventory
+  #
+  # @param [none]
+  def order_has_been_completed
+    self.completed_at = Time.zone.now
+    self.save
+    update_inventory
   end
 end

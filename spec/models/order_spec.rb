@@ -230,7 +230,7 @@ describe Order, "instance methods" do
     it  "should set completed_at and update the state" do
       @order.stubs(:update_inventory).returns(true)
       @order.completed_at = nil
-      @order.order_complete!
+      @order.complete!
       @order.state.should == 'complete'
       @order.completed_at.should_not == nil
     end

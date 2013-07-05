@@ -57,16 +57,56 @@ class Payment < ActiveRecord::Base
   # Authorize payment after registration and verification from payment system
   # Scenario with external terminal where we have already invoice and payment
   # objects
+  # TODO replace implementation by process method?
   def authorize
     payment_system = PaymentSystem.new(payment_method_id)
     result = payment_system.gateway.authorize(nil, nil, {:transactionId => confirmation_id})
-    invoice.payment_authorized! if result.success?
+    if result.success?
+      invoice.payment_authorized!
+      self.action = "authorization"
+      save
+    end
     result.success?
   end
 
+  def cancel
+    process("canceled", amount) do |gw, options|
+      gw.cancel(confirmation_id, options)
+    end
+  end
+
+  def capture(amount)
+    process('capture', amount) do |gw, options|
+      gw.capture(amount, confirmation_id, options)
+    end
+  end
+
+  def process(action, amount = nil, options = {})
+    payment_system = PaymentSystem.new(payment_method_id)
+    result = Payment.new(:payment_method_id => payment_method_id)
+
+    result.amount = (amount && !amount.integer?) ? (amount * 100).to_i : amount
+    result.action = action
+      begin
+        response          = yield payment_system.gateway, options
+        result.success    = response.success?
+        result.confirmation_id  = response.authorization
+        result.message    = response.message
+        result.params     = response.params
+        result.test       = response.test?
+      rescue PaymentSystem::Error => e
+        result.success = false
+        result.confirmation_id = nil
+        result.message = e.message
+        result.params = {}
+        result.test = PaymentSystem.gateway.test?
+      end
+    result
+  end
 
   class << self
 
+      # TODO remove?
       def store( credit_card, options = {})
         options[:order_id] ||= unique_order_number
         process( 'store' ) do |gw|
@@ -74,6 +114,7 @@ class Payment < ActiveRecord::Base
         end
       end
 
+      # TODO remove?
       def unstore( profile_key, options = {})
         options[:order_id] ||= unique_order_number
         process( 'unstore' ) do |gw|
@@ -90,14 +131,21 @@ class Payment < ActiveRecord::Base
       # Register transaction and prepare everything before we will proceed the payment
       # Used only when terminal is hosted by payment provider.
       def register(amount, order, payment_method_id)
-        process('registration', order, amount, payment_method_id) do |gw, options|
+        process('registration', amount, order, payment_method_id) do |gw, options|
           gw.register(amount, options)
         end
       end
 
+      # can be a object method as we already need to have payment object
+      # before we will call it.
+      # TODO
       def capture(amount, authorization, order)
-        process('capture', order, amount, payment_method_id) do |gw|
-          gw.capture(amount, authorization, order)
+        # TODO we need to change how staff work as we need here payment_method
+        # id to make sure that we will work with correct payment method
+        # It can happen that you want to use 2 payment methods for one order.
+        payment_method_id = order.invoices.first.payments.first.payment_method_id
+        process('capture', amount, order, payment_method_id) do |gw, options|
+          gw.capture(amount, authorization, options)
         end
       end
 
@@ -144,9 +192,9 @@ class Payment < ActiveRecord::Base
         "#{Time.now.to_i}-#{rand(1_000_000)}"
       end
 
-      def process(action, order, amount = nil, payment_method_id)
+      def process(action, amount = nil, order = nil, payment_method_id)
         payment_system = PaymentSystem.new(payment_method_id)
-        options = {:order => order}
+        options = payment_system.prepare_options_for_gateway({:order => order})
         result = Payment.new(:payment_method_id => payment_method_id)
 
         result.amount = (amount && !amount.integer?) ? (amount * 100).to_i : amount

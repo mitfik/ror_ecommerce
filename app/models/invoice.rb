@@ -178,12 +178,14 @@ class Invoice < ActiveRecord::Base
   end
 
   def cancel_authorized_payment
-    batch       = batches.first
-    if batch# if not we never authorized the payment
+   transaction do
+    payment = authorized_payment
+    cancellation = payment.cancel
+    payments.push(cancellation)
+    if cancellation.success?
       self.cancel!
-      batch.transactions.push(CreditCardCancel.new_cancel_authorized_payment(order.user, amount))
-      batch.save
     end
+   end
   end
 
   def self.process_rma(return_amount, order)
@@ -202,7 +204,6 @@ class Invoice < ActiveRecord::Base
     batch.save
   end
 
-
   # call to find the confirmation_id sent by the payment processor.
   #
   # @param [none]
@@ -211,6 +212,14 @@ class Invoice < ActiveRecord::Base
     if authorization = payments.order('id ASC').find_by(action: 'authorization', success: true )
       authorization.confirmation_id #reference
     end
+  end
+
+  # call to find authorized payment
+  #
+  # @param [none]
+  # @return [Payment] payment object
+  def authorized_payment
+    payments.order('id ASC').find_by(action: 'authorization', success: true )
   end
 
   # call to find out if the transaction has succeeded.
@@ -261,7 +270,8 @@ class Invoice < ActiveRecord::Base
 
   def capture_payment
     transaction do
-      capture = Payment.capture(integer_amount, authorization_reference, self.order)
+      payment = authorized_payment
+      capture = payment.capture(integer_amount)
       payments.push(capture)
       if capture.success?
         payment_captured!
