@@ -1,4 +1,11 @@
 class PaymentSystem
+  include ActionView::Helpers
+  include ActionDispatch::Routing
+  include Rails.application.routes.url_helpers
+
+  def default_url_options
+    ActionMailer::Base.default_url_options
+  end
 
   # PaymentSystem class is used for handling all communication between store
   # and payment provider. The class should be enough flexible to implement
@@ -20,7 +27,7 @@ class PaymentSystem
     if Rails.env.test?
       return PaymentSystem::TestGateway.new
     else
-      klass = payment_method.gateway_class_name
+      klass = eval(payment_method.gateway_class_name)
       return klass.new(payment_method.gateway.to_hash)
     end
   end
