@@ -1,4 +1,4 @@
-class PaymentSystem::Providers::NetaxeptGateway
+class PaymentSystem::Providers::NetaxeptGateway < ActiveMerchant::Billing::NetaxeptGateway
 
     def initialize(options = {})
       super options
@@ -10,7 +10,6 @@ class PaymentSystem::Providers::NetaxeptGateway
       void(confirmation_id, options)
     end
 
-    class << self
       # After user will pay or not we will get notification about that
       # this method handle response from payment system and return array with transaction id and boolean
       # to inform if payment was successul
@@ -18,12 +17,10 @@ class PaymentSystem::Providers::NetaxeptGateway
         return [params[:transactionId], (params[:responseCode] == 'OK' ? true : false )]
       end
 
-      # Provides terminal url for given invoice
-      # last payment?
-      def terminal_url(payment)
-        transactionId = payment.params["TransactionId"]
-        payment_system = PaymentSystem.new(payment.payment_method_id)
-        return payment_system.integrations.generate_terminal_url(transactionId, payment_system.payment_method.gateway.login)
-      end
+    # Provides terminal url for given invoice
+    def terminal_url(payment)
+      transactionId = payment.params["TransactionId"]
+      payment_system = PaymentSystem.new(payment.payment_method_id)
+      return payment_system.integrations.generate_terminal_url(transactionId, payment_system.payment_method.gateway.login)
     end
 end
