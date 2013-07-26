@@ -49,9 +49,6 @@ Hadean::Application.routes.draw do
         get :checkout
         get :confirmation
       end
-      collection do
-        get :replay
-      end
     end
     resources  :shipping_methods
     resources  :addresses do
@@ -59,8 +56,8 @@ Hadean::Application.routes.draw do
         put :select_address
       end
     end
-
   end
+  get "shopping/orders/replay/:id" => "shopping/orders#replay", :as => :replay_shopping_orders
 
   namespace :admin do
     namespace :customer_service do

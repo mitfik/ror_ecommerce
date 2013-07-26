@@ -49,7 +49,7 @@ class PaymentSystem
   # TODO Documentation
   def prepare_options_for_gateway(options = {})
     order = options[:order]
-    {:redirectUrl => replay_shopping_orders_url, :currencyCode => payment_method.currency_code, :orderNumber => order.id }
+    {:redirectUrl => replay_shopping_orders_url(payment_method.id), :currencyCode => payment_method.currency_code, :orderNumber => order.id }
   end
 
   def prepare_options_for_authorization(options = {})
