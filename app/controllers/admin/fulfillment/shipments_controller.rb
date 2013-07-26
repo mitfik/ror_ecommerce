@@ -53,7 +53,8 @@ class Admin::Fulfillment::ShipmentsController < Admin::Fulfillment::BaseControll
     @shipment = Shipment.find(params[:id])
 
     respond_to do |format|
-      if @shipment.update_attributes(params[:shipment])
+      @shipment.tracking = params[:shipment][:tracking]
+      if @shipment.save
         format.html { redirect_to(admin_fulfillment_shipment_path(@shipment, :order_id => @shipment.order.number), :notice => 'Shipment was successfully updated.') }
       else
         form_info
