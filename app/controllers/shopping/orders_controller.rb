@@ -53,8 +53,8 @@ class Shopping::OrdersController < Shopping::BaseController
   # system provider inform the store about status of the payment by sending
   # those information to replay_shopping_orders_path (pointing to this method).
   def replay
-    # TODO how do we know which payment methods hits us?
-    transactionId, success  = PaymentSystem.gateway.parse_replay(params)
+    payment_system = PaymentSystem.new(params[:id])
+    transactionId, success  = payment_system.gateway.parse_replay(params)
     payment = Payment.find_by_confirmation_id(transactionId) if transactionId
     if success && payment
       if payment.authorize
@@ -92,7 +92,10 @@ class Shopping::OrdersController < Shopping::BaseController
       # prepare invoice with payment and setup purchase
       response = @order.prepare_invoice(payment_method_id)
       if response.succeeded?
-        redirect_to PaymentSystem::Gateway.terminal_url(response.payments.last)
+        payment_system = PaymentSystem.new(payment_method_id)
+        # TODO: are we sure that we want to fetch terminal_url for last
+        # payments?
+        redirect_to payment_system.terminal_url(payment_method_id, response.payments.last)
       else
         flash[:alert] =  [I18n.t('could_not_process'), I18n.t('the_order')].join(' ')
         render :action => "index"
